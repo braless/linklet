@@ -19,4 +19,9 @@ CREATE TABLE IF NOT EXISTS logs (
   `create_time` DATE
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_links_slug ON links (slug);
+CREATE INDEX IF NOT EXISTS idx_links_url ON links (url);
+CREATE INDEX IF NOT EXISTS idx_links_status ON links (status);
+CREATE INDEX IF NOT EXISTS idx_logs_slug ON logs (slug);
+
 

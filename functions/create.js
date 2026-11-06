@@ -1,144 +1,124 @@
-/**
- * @api {post} /create Create
- */
+import {
+  formatCreateTime,
+  generateRandomSlug,
+  normalizeUrl,
+  validateSlug,
+} from './_lib/link-utils.js';
 
-// Path: functions/create.js
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Max-Age': '86400',
+};
 
-function generateRandomString(length) {
-    const characters = '1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let result = '';
-
-    for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(Math.random() * characters.length);
-        result += characters.charAt(randomIndex);
-    }
-
-    return result;
+function json(data, status = 200) {
+  return Response.json(data, { status, headers: corsHeaders });
 }
 
 export async function onRequest(context) {
-    if (context.request.method === 'OPTIONS') {
-        return new Response(null, {
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Max-Age': '86400', // 24小时
-            },
-        });
-    }
-// export async function onRequestPost(context) {
-    const { request, env } = context;
-    const originurl = new URL(request.url);
-    const clientIP = request.headers.get("x-forwarded-for") || request.headers.get("clientIP");
-    const userAgent = request.headers.get("user-agent");
-    const origin = `${originurl.protocol}//${originurl.hostname}`
+  const { request, env } = context;
 
-    const options = {
-        timeZone: 'Asia/Shanghai',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour12: false,
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    };
-    const timedata = new Date();
-    const formattedDate = new Intl.DateTimeFormat('zh-CN', options).format(timedata);
-    const { url, slug } = await request.json();
-    const corsHeaders = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Max-Age': '86400', // 24 hours
-    };
-    if (!url) return Response.json({ message: 'Missing required parameter: url.' });
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
 
-    // url格式检查
-    if (!/^https?:\/\/.{3,}/.test(url)) {
-        return Response.json({ message: 'Illegal format: url.' },{
-            headers: corsHeaders,
-            status: 400
-        })
-    }
+  if (request.method !== 'POST') {
+    return json({ message: 'Method Not Allowed.' }, 405);
+  }
 
-    // 自定义slug长度检查 2<slug<10 是否不以文件后缀结尾
-    if (slug && (slug.length < 2 || slug.length > 10 || /.+\.[a-zA-Z]+$/.test(slug))) {
-        return Response.json({ message: 'Illegal length: slug, (>= 2 && <= 10), or not ending with a file extension.' },{
-            headers: corsHeaders,
-            status: 400
-        
-        });
-    }
+  if (!env.DB) {
+    return json({ message: 'D1 database is not configured.' }, 503);
+  }
 
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ message: 'Invalid JSON body.' }, 400);
+  }
 
+  const url = normalizeUrl(body && body.url);
+  if (!url) {
+    return json({ message: 'Missing or illegal parameter: url.' }, 400);
+  }
 
+  const requestedSlug = body && body.slug !== undefined ? body.slug : '';
+  const slugValidation = validateSlug(requestedSlug, { optional: true });
+  if (!slugValidation.valid) {
+    return json({ message: slugValidation.message }, 400);
+  }
 
-    try {
+  const requestUrl = new URL(request.url);
+  const origin = requestUrl.origin;
+  const destination = new URL(url);
 
-        // 如果自定义slug
-        if (slug) {
-            const existUrl = await env.DB.prepare(`SELECT url as existUrl FROM links where slug = '${slug}'`).first()
+  if (destination.hostname === requestUrl.hostname) {
+    return json({ message: 'You cannot shorten a link to the same domain.' }, 400);
+  }
 
-            // url & slug 是一样的。
-            if (existUrl && existUrl.existUrl === url) {
-                return Response.json({ slug, link: `${origin}/${slug2}` },{
-                    headers: corsHeaders,
-                    status: 200
-                })
-            }
+  try {
+    const customSlug = slugValidation.value;
 
-            // slug 已存在
-            if (existUrl) {
-                return Response.json({ message: 'Slug already exists.' },{
-                    headers: corsHeaders,
-                    status: 200  
-                })
-            }
+    if (customSlug) {
+      const existing = await env.DB.prepare(
+        'SELECT url, status FROM links WHERE slug = ? LIMIT 1'
+      )
+        .bind(customSlug)
+        .first();
+
+      if (existing) {
+        if (existing.url === url && Number(existing.status) === 1) {
+          return json({ slug: customSlug, link: `${origin}/${customSlug}` });
         }
+        return json({ message: 'Slug already exists.' }, 409);
+      }
+    } else {
+      const existing = await env.DB.prepare(
+        'SELECT slug FROM links WHERE url = ? AND status = 1 ORDER BY id DESC LIMIT 1'
+      )
+        .bind(url)
+        .first();
 
-        // 目标 url 已存在
-        const existSlug = await env.DB.prepare(`SELECT slug as existSlug FROM links where url = '${url}'`).first()
-
-        // url 存在且没有自定义 slug
-        if (existSlug && !slug) {
-            return Response.json({ slug: existSlug.existSlug, link: `${origin}/${existSlug.existSlug}` },{
-                headers: corsHeaders,
-                status: 200
-            
-            })
-        }
-        const bodyUrl = new URL(url);
-
-        if (bodyUrl.hostname === originurl.hostname) {
-            return Response.json({ message: 'You cannot shorten a link to the same domain.' }, {
-                headers: corsHeaders,
-                status: 400
-            })
-        }
-
-        // 生成随机slug
-        const slug2 = slug ? slug : generateRandomString(4);
-        // console.log('slug', slug2);
-
-        const info = await env.DB.prepare(`INSERT INTO links (url, slug, ip, status, ua, create_time) 
-        VALUES ('${url}', '${slug2}', '${clientIP}',1, '${userAgent}', '${formattedDate}')`).run()
-
-        return Response.json({ slug: slug2, link: `${origin}/${slug2}` },{
-            headers: corsHeaders,
-            status: 200
-        })
-    } catch (e) {
-        // console.log(e);
-        return Response.json({ message: e.message },{
-            headers: corsHeaders,
-            status: 500
-        })
+      if (existing) {
+        return json({ slug: existing.slug, link: `${origin}/${existing.slug}` });
+      }
     }
 
+    let slug = customSlug;
+    if (!slug) {
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        const candidate = generateRandomSlug(4);
+        const existing = await env.DB.prepare(
+          'SELECT id FROM links WHERE slug = ? LIMIT 1'
+        )
+          .bind(candidate)
+          .first();
 
+        if (!existing) {
+          slug = candidate;
+          break;
+        }
+      }
+    }
 
+    if (!slug) return json({ message: 'Unable to generate a unique slug.' }, 500);
+
+    const clientIp = request.headers.get('CF-Connecting-IP')
+      || request.headers.get('X-Forwarded-For')
+      || '';
+    const userAgent = request.headers.get('User-Agent') || '';
+
+    await env.DB.prepare(`
+      INSERT INTO links (url, slug, ip, status, ua, create_time)
+      VALUES (?, ?, ?, 1, ?, ?)
+    `)
+      .bind(url, slug, clientIp, userAgent, formatCreateTime())
+      .run();
+
+    return json({ slug, link: `${origin}/${slug}` });
+  } catch (error) {
+    console.error('Failed to create short link:', error);
+    return json({ message: 'Failed to create short link.' }, 500);
+  }
 }
-
-
-

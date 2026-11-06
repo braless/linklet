@@ -8,9 +8,9 @@
   },
   "devDependencies": {},
   "scripts": {
-    "dev": "wrangler pages dev . --d1=short",
+    "dev": "wrangler pages dev .",
     "clear": "kill -9 $(pgrep workerd)",
-    "d1": "wrangler d1 execute short --local --file=./short.sql"
+    "d1": "wrangler d1 execute linklet --local --file=./short.sql"
   },
   "repository": {
     "type": "git",

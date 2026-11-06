@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>链接维护</title>
+  <style>
+    :root {
+      --primary: #4263eb;
+      --primary-dark: #364fc7;
+      --primary-soft: #edf2ff;
+      --ink: #172033;
+      --muted: #697586;
+      --line: #e4e9f2;
+      --surface: #ffffff;
+      --background: #f5f7fb;
+      --success: #0ca678;
+      --success-soft: #e6fcf5;
+      --danger: #e03131;
+      --danger-soft: #fff5f5;
+      --warning: #b7791f;
+      --warning-soft: #fff9db;
+      --shadow: 0 18px 50px rgba(32, 47, 80, 0.10);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html { min-height: 100%; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 0%, rgba(92, 124, 250, 0.10), transparent 32rem),
+        var(--background);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: 0.55; }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .auth-shell {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px 18px;
+    }
+
+    .auth-card {
+      width: min(100%, 430px);
+      padding: 38px;
+      border: 1px solid rgba(228, 233, 242, 0.9);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 24px;
+      border-radius: 14px;
+      color: #fff;
+      background: linear-gradient(145deg, #5c7cfa, #364fc7);
+      box-shadow: 0 10px 22px rgba(66, 99, 235, 0.28);
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .auth-card h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: -0.03em; }
+    .auth-card .lead { margin: 0 0 28px; color: var(--muted); }
+    .field { display: grid; gap: 8px; margin-bottom: 18px; }
+    .field label { color: #344054; font-size: 14px; font-weight: 650; }
+    .field small { color: var(--muted); font-size: 12px; }
+
+    .input-wrap { position: relative; }
+    input, select {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 13px;
+      border: 1px solid #d5dce8;
+      border-radius: 10px;
+      outline: none;
+      color: var(--ink);
+      background: #fff;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(66, 99, 235, 0.12);
+    }
+    .input-wrap input { padding-right: 62px; }
+
+    .button {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      color: #fff;
+      background: var(--primary);
+      font-weight: 650;
+      transition: background .18s, border-color .18s, transform .18s;
+    }
+    .button:hover:not(:disabled) { background: var(--primary-dark); }
+    .button:active:not(:disabled) { transform: translateY(1px); }
+    .button.secondary {
+      border-color: var(--line);
+      color: #344054;
+      background: #fff;
+    }
+    .button.secondary:hover:not(:disabled) { border-color: #c6cfdd; background: #f9fafb; }
+    .button.danger { background: var(--danger); }
+    .button.danger:hover:not(:disabled) { background: #c92a2a; }
+    .button.block { width: 100%; }
+    .button.small { min-height: 34px; padding: 6px 11px; border-radius: 8px; font-size: 13px; }
+    .text-button {
+      padding: 4px 6px;
+      border: 0;
+      border-radius: 6px;
+      color: var(--primary);
+      background: transparent;
+      font-size: 13px;
+      font-weight: 650;
+    }
+    .text-button:hover { background: var(--primary-soft); }
+    .text-button.danger { color: var(--danger); }
+    .text-button.danger:hover { background: var(--danger-soft); }
+
+    .password-toggle {
+      position: absolute;
+      top: 50%;
+      right: 9px;
+      transform: translateY(-50%);
+      padding: 5px 8px;
+      border: 0;
+      border-radius: 6px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 13px;
+    }
+    .password-toggle:hover { color: var(--ink); background: #f1f4f9; }
+
+    .message {
+      margin: 14px 0 0;
+      padding: 10px 12px;
+      border-radius: 9px;
+      font-size: 14px;
+    }
+    .message.error { color: #b42318; background: var(--danger-soft); border: 1px solid #ffc9c9; }
+    .auth-hint {
+      margin: 22px 0 0;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .setup-card { width: min(100%, 580px); }
+    .setup-card h1 { margin-bottom: 10px; }
+    .setup-steps { display: grid; gap: 14px; margin: 24px 0; padding: 0; list-style: none; }
+    .setup-steps li {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    .step-number {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--primary);
+      background: var(--primary-soft);
+      font-size: 13px;
+      font-weight: 750;
+    }
+    code {
+      display: inline-block;
+      max-width: 100%;
+      padding: 2px 6px;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      color: #334155;
+      background: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 0.9em;
+      overflow-wrap: anywhere;
+    }
+    pre {
+      margin: 8px 0 0;
+      padding: 12px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 9px;
+      color: #334155;
+      background: #f8fafc;
+      font-size: 12px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid rgba(228, 233, 242, 0.9);
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(14px);
+    }
+    .topbar-inner {
+      width: min(100% - 36px, 1240px);
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin: 0 auto;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand .brand-mark { width: 38px; height: 38px; margin: 0; border-radius: 11px; font-size: 19px; }
+    .brand-title { font-size: 17px; font-weight: 750; letter-spacing: -0.02em; }
+    .brand-subtitle { color: var(--muted); font-size: 12px; }
+    .topbar-actions { display: flex; gap: 10px; }
+
+    .dashboard { width: min(100% - 36px, 1240px); margin: 0 auto; padding: 30px 0 48px; }
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 22px; }
+    .page-heading h1 { margin: 0 0 5px; font-size: 28px; letter-spacing: -0.035em; }
+    .page-heading p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: 0 4px 16px rgba(32, 47, 80, 0.035);
+    }
+    .stat-label { color: var(--muted); font-size: 13px; }
+    .stat-value { margin-top: 7px; font-size: 27px; font-weight: 760; letter-spacing: -0.04em; }
+
+    .panel {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: 0 8px 30px rgba(32, 47, 80, 0.045);
+    }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    .search { position: relative; flex: 1; max-width: 430px; }
+    .search span {
+      position: absolute;
+      top: 50%;
+      left: 13px;
+      transform: translateY(-50%);
+      color: #98a2b3;
+      pointer-events: none;
+    }
+    .search input { padding-left: 38px; }
+    .toolbar select { width: 150px; }
+    .toolbar-spacer { flex: 1; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; min-width: 920px; border-collapse: collapse; }
+    th, td { padding: 14px 16px; border-bottom: 1px solid #eef1f6; text-align: left; vertical-align: middle; }
+    th {
+      color: #667085;
+      background: #fafbfc;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    tbody tr { transition: background .15s; }
+    tbody tr:hover { background: #fafbff; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .slug-cell { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+    .slug-cell a { color: #2f3b52; font-weight: 700; }
+    .url-cell { max-width: 360px; }
+    .url-cell a {
+      display: block;
+      overflow: hidden;
+      color: #475467;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .url-cell small { display: block; margin-top: 2px; color: #98a2b3; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+    .badge::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; }
+    .badge.active { color: var(--success); background: var(--success-soft); }
+    .badge.disabled { color: var(--warning); background: var(--warning-soft); }
+    .number { font-variant-numeric: tabular-nums; }
+    .row-actions { display: flex; align-items: center; gap: 2px; white-space: nowrap; }
+    .created { color: var(--muted); font-size: 13px; white-space: nowrap; }
+
+    .empty {
+      padding: 64px 24px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .empty strong { display: block; margin-bottom: 5px; color: #344054; }
+    .pagination {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 10px 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .pagination-actions { display: flex; align-items: center; gap: 8px; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, 0.48);
+      backdrop-filter: blur(3px);
+    }
+    .modal {
+      width: min(100%, 520px);
+      max-height: calc(100vh - 36px);
+      overflow-y: auto;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 28px 80px rgba(15, 23, 42, 0.24);
+    }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 21px 24px; border-bottom: 1px solid var(--line); }
+    .modal-header h2 { margin: 0; font-size: 19px; letter-spacing: -0.02em; }
+    .modal-close { width: 34px; height: 34px; border: 0; border-radius: 8px; color: var(--muted); background: transparent; font-size: 22px; }
+    .modal-close:hover { color: var(--ink); background: #f2f4f7; }
+    .modal-body { padding: 22px 24px 8px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px 22px; }
+
+    .toast {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 80;
+      max-width: min(380px, calc(100vw - 36px));
+      padding: 12px 16px;
+      border: 1px solid #b2f2bb;
+      border-radius: 10px;
+      color: #1e4620;
+      background: #ebfbee;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
+      font-size: 14px;
+      animation: toast-in .2s ease-out;
+    }
+    .toast.error { border-color: #ffc9c9; color: #8a1c1c; background: #fff5f5; }
+    @keyframes toast-in { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .loading-row { padding: 54px 20px; color: var(--muted); text-align: center; }
+    .spinner {
+      width: 18px;
+      height: 18px;
+      display: inline-block;
+      margin-right: 8px;
+      border: 2px solid #cbd5e1;
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      vertical-align: -4px;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 820px) {
+      .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .toolbar { flex-wrap: wrap; }
+      .search { max-width: none; flex-basis: 100%; }
+      .toolbar-spacer { display: none; }
+      .toolbar select { flex: 1; }
+      .page-heading { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (max-width: 560px) {
+      .auth-card { padding: 28px 22px; }
+      .topbar-inner, .dashboard { width: min(100% - 24px, 1240px); }
+      .topbar-inner { min-height: 64px; }
+      .brand-subtitle { display: none; }
+      .topbar-actions .button span { display: none; }
+      .stats-grid { gap: 10px; }
+      .stat-card { padding: 15px; }
+      .stat-value { font-size: 23px; }
+      .toolbar { padding: 13px; }
+      .pagination { align-items: flex-start; flex-direction: column; }
+      .pagination-actions { width: 100%; justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+  <section id="login-view" class="auth-shell" hidden>
+    <div class="auth-card">
+      <div class="brand-mark">链</div>
+      <h1>链接维护</h1>
+      <p class="lead">输入 Cloudflare 中配置的管理员密码。</p>
+      <form id="login-form" novalidate>
+        <div class="field">
+          <label for="password">管理员密码</label>
+          <div class="input-wrap">
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="请输入密码" required autofocus>
+            <button id="password-toggle" class="password-toggle" type="button">显示</button>
+          </div>
+        </div>
+        <button id="login-button" class="button block" type="submit">进入后台</button>
+        <p id="login-error" class="message error" hidden></p>
+      </form>
+      <p class="auth-hint">密码由 Cloudflare 密钥 <code>ADMIN_PASSWORD</code> 提供，不会保存在数据库中。</p>
+    </div>
+  </section>
+
+  <section id="setup-view" class="auth-shell" hidden>
+    <div class="auth-card setup-card">
+      <div class="brand-mark">链</div>
+      <h1>后台尚未初始化</h1>
+      <p class="lead">请先在 Cloudflare 项目中添加管理员密码密钥，然后重新加载此页面。</p>
+      <ol class="setup-steps">
+        <li>
+          <span class="step-number">1</span>
+          <div>打开 Cloudflare 控制台中的 Pages 项目，进入 <strong>Settings → Environment variables</strong>。</div>
+        </li>
+        <li>
+          <span class="step-number">2</span>
+          <div>添加一个加密变量，变量名为 <code>ADMIN_PASSWORD</code>，值为你自己的高强度密码。</div>
+        </li>
+        <li>
+          <span class="step-number">3</span>
+          <div>重新部署项目后访问 <code>/admin</code>。也可以在项目目录执行：</div>
+        </li>
+      </ol>
+      <pre>wrangler pages secret put ADMIN_PASSWORD --project-name &lt;你的 Pages 项目名&gt;</pre>
+      <button id="setup-refresh" class="button block" type="button" style="margin-top: 20px;">我已配置，重新检查</button>
+    </div>
+  </section>
+
+  <div id="dashboard-view" hidden>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-mark">链</div>
+          <div>
+            <div class="brand-title">链接维护</div>
+            <div class="brand-subtitle">Linklet 管理后台</div>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <button id="create-button" class="button secondary small" type="button"><span>＋</span> 新建链接</button>
+          <button id="logout-button" class="button secondary small" type="button">退出登录</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="dashboard">
+      <div class="page-heading">
+        <div>
+          <h1>全部短链接</h1>
+          <p>管理目标地址、短链 slug 和启用状态。</p>
+        </div>
+      </div>
+
+      <section class="stats-grid" aria-label="链接统计">
+        <div class="stat-card"><div class="stat-label">链接总数</div><div id="stat-total" class="stat-value">0</div></div>
+        <div class="stat-card"><div class="stat-label">已启用</div><div id="stat-active" class="stat-value">0</div></div>
+        <div class="stat-card"><div class="stat-label">已停用</div><div id="stat-disabled" class="stat-value">0</div></div>
+        <div class="stat-card"><div class="stat-label">累计访问</div><div id="stat-clicks" class="stat-value">0</div></div>
+      </section>
+
+      <section class="panel">
+        <div class="toolbar">
+          <label class="search">
+            <span>⌕</span>
+            <input id="search-input" type="search" placeholder="搜索 slug 或目标网址" autocomplete="off">
+          </label>
+          <select id="status-filter" aria-label="按状态筛选">
+            <option value="">全部状态</option>
+            <option value="1">已启用</option>
+            <option value="0">已停用</option>
+          </select>
+          <span class="toolbar-spacer"></span>
+          <button id="refresh-button" class="button secondary small" type="button">刷新</button>
+        </div>
+
+        <div id="table-loading" class="loading-row" hidden><span class="spinner"></span>正在加载...</div>
+        <div class="table-wrap">
+          <table id="links-table">
+            <thead>
+              <tr>
+                <th>短链</th>
+                <th>目标地址</th>
+                <th>状态</th>
+                <th>访问</th>
+                <th>创建时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="links-body"></tbody>
+          </table>
+        </div>
+        <div id="empty-state" class="empty" hidden>
+          <strong>没有找到链接</strong>
+          <span>调整搜索条件，或新建一个短链接。</span>
+        </div>
+        <div class="pagination">
+          <span id="page-summary">共 0 条</span>
+          <div class="pagination-actions">
+            <button id="prev-page" class="button secondary small" type="button">上一页</button>
+            <span id="page-number">第 1 页</span>
+            <button id="next-page" class="button secondary small" type="button">下一页</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal-backdrop" class="modal-backdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <h2 id="modal-title">新建链接</h2>
+        <button id="modal-close" class="modal-close" type="button" aria-label="关闭">×</button>
+      </div>
+      <form id="link-form">
+        <div class="modal-body">
+          <div class="field">
+            <label for="link-url">目标地址</label>
+            <input id="link-url" type="url" placeholder="https://example.com/page" required>
+          </div>
+          <div class="field">
+            <label for="link-slug">短链 slug</label>
+            <input id="link-slug" type="text" maxlength="32" placeholder="留空则自动生成">
+            <small>2-32 个字符，仅限字母、数字、下划线和连字符。</small>
+          </div>
+          <div class="field">
+            <label for="link-status">状态</label>
+            <select id="link-status">
+              <option value="1">启用</option>
+              <option value="0">停用</option>
+            </select>
+          </div>
+          <p id="modal-error" class="message error" hidden></p>
+        </div>
+        <div class="modal-footer">
+          <button id="modal-cancel" class="button secondary" type="button">取消</button>
+          <button id="modal-submit" class="button" type="submit">保存</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script>
+    (() => {
+      const state = {
+        page: 1,
+        pageSize: 20,
+        query: '',
+        status: '',
+        total: 0,
+        items: [],
+        editing: null,
+        loading: false,
+        searchTimer: null,
+      };
+
+      const views = {
+        login: document.getElementById('login-view'),
+        setup: document.getElementById('setup-view'),
+        dashboard: document.getElementById('dashboard-view'),
+      };
+
+      const loginForm = document.getElementById('login-form');
+      const loginButton = document.getElementById('login-button');
+      const loginError = document.getElementById('login-error');
+      const passwordInput = document.getElementById('password');
+      const passwordToggle = document.getElementById('password-toggle');
+      const linksBody = document.getElementById('links-body');
+      const linksTable = document.getElementById('links-table');
+      const emptyState = document.getElementById('empty-state');
+      const tableLoading = document.getElementById('table-loading');
+      const searchInput = document.getElementById('search-input');
+      const statusFilter = document.getElementById('status-filter');
+      const prevPage = document.getElementById('prev-page');
+      const nextPage = document.getElementById('next-page');
+      const pageSummary = document.getElementById('page-summary');
+      const pageNumber = document.getElementById('page-number');
+      const modalBackdrop = document.getElementById('modal-backdrop');
+      const modalTitle = document.getElementById('modal-title');
+      const modalError = document.getElementById('modal-error');
+      const modalSubmit = document.getElementById('modal-submit');
+      const linkForm = document.getElementById('link-form');
+      const linkUrl = document.getElementById('link-url');
+      const linkSlug = document.getElementById('link-slug');
+      const linkStatus = document.getElementById('link-status');
+      const toast = document.getElementById('toast');
+      let toastTimer = null;
+
+      function showView(name) {
+        Object.entries(views).forEach(([key, element]) => {
+          element.hidden = key !== name;
+        });
+      }
+
+      function showLogin(message = '') {
+        showView('login');
+        loginError.hidden = !message;
+        loginError.textContent = message;
+        passwordInput.value = '';
+        setTimeout(() => passwordInput.focus(), 0);
+      }
+
+      function showToast(message, type = 'success') {
+        clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.className = `toast${type === 'error' ? ' error' : ''}`;
+        toast.hidden = false;
+        toastTimer = setTimeout(() => { toast.hidden = true; }, 3200);
+      }
+
+      async function api(path, options = {}) {
+        const headers = { Accept: 'application/json', ...(options.headers || {}) };
+        if (options.body) headers['Content-Type'] = 'application/json';
+
+        const response = await fetch(path, {
+          credentials: 'same-origin',
+          ...options,
+          headers,
+        });
+
+        let payload = null;
+        try { payload = await response.json(); } catch { /* empty response */ }
+
+        if (response.status === 401 && !path.endsWith('/login')) {
+          showLogin('登录已过期，请重新输入密码。');
+          throw new Error('登录已过期，请重新登录。');
+        }
+
+        if (!response.ok) {
+          throw new Error((payload && payload.message) || `请求失败（${response.status}）`);
+        }
+
+        return payload || {};
+      }
+
+      async function checkSession() {
+        try {
+          const response = await fetch('/admin/api/session', {
+            credentials: 'same-origin',
+            headers: { Accept: 'application/json' },
+          });
+          const data = await response.json();
+
+          if (!data.configured) {
+            showView('setup');
+            return;
+          }
+
+          if (!data.authenticated) {
+            showLogin();
+            return;
+          }
+
+          showView('dashboard');
+          await loadLinks();
+        } catch {
+          showLogin('无法连接后台服务，请稍后重试。');
+        }
+      }
+
+      async function loadLinks() {
+        if (state.loading) return;
+        state.loading = true;
+        tableLoading.hidden = false;
+        linksTable.hidden = true;
+        emptyState.hidden = true;
+
+        const params = new URLSearchParams({
+          page: String(state.page),
+          pageSize: String(state.pageSize),
+        });
+        if (state.query) params.set('q', state.query);
+        if (state.status !== '') params.set('status', state.status);
+
+        try {
+          const data = await api(`/admin/api/links?${params.toString()}`);
+          state.items = data.items || [];
+          state.total = data.total || 0;
+          renderStats(data.stats || {});
+          renderLinks();
+          renderPagination();
+        } catch (error) {
+          showToast(error.message, 'error');
+          emptyState.hidden = false;
+          emptyState.querySelector('strong').textContent = '加载失败';
+          emptyState.querySelector('span').textContent = error.message;
+        } finally {
+          state.loading = false;
+          tableLoading.hidden = true;
+        }
+      }
+
+      function renderStats(stats) {
+        document.getElementById('stat-total').textContent = Number(stats.total || 0).toLocaleString('zh-CN');
+        document.getElementById('stat-active').textContent = Number(stats.active || 0).toLocaleString('zh-CN');
+        document.getElementById('stat-disabled').textContent = Number(stats.disabled || 0).toLocaleString('zh-CN');
+        document.getElementById('stat-clicks').textContent = Number(stats.clicks || 0).toLocaleString('zh-CN');
+      }
+
+      function makeElement(tag, className, text) {
+        const element = document.createElement(tag);
+        if (className) element.className = className;
+        if (text !== undefined) element.textContent = text;
+        return element;
+      }
+
+      function renderLinks() {
+        linksBody.replaceChildren();
+        const hasItems = state.items.length > 0;
+        linksTable.hidden = !hasItems;
+        emptyState.hidden = hasItems;
+
+        if (!hasItems) {
+          emptyState.querySelector('strong').textContent = '没有找到链接';
+          emptyState.querySelector('span').textContent = '调整搜索条件，或新建一个短链接。';
+          return;
+        }
+
+        for (const item of state.items) {
+          const row = document.createElement('tr');
+
+          const slugCell = document.createElement('td');
+          const slugWrap = makeElement('div', 'slug-cell');
+          const shortLink = makeElement('a', '', `/${item.slug}`);
+          shortLink.href = `/${encodeURIComponent(item.slug)}`;
+          shortLink.target = '_blank';
+          shortLink.rel = 'noopener noreferrer';
+          const copyButton = makeElement('button', 'text-button', '复制');
+          copyButton.type = 'button';
+          copyButton.addEventListener('click', () => copyShortLink(item.slug));
+          slugWrap.append(shortLink, copyButton);
+          slugCell.append(slugWrap);
+          row.append(slugCell);
+
+          const urlCell = makeElement('td', 'url-cell');
+          const destination = makeElement('a', '', item.url);
+          destination.href = item.url;
+          destination.target = '_blank';
+          destination.rel = 'noopener noreferrer';
+          destination.title = item.url;
+          let host = '';
+          try { host = new URL(item.url).hostname; } catch { /* legacy invalid URL */ }
+          const hostText = makeElement('small', '', host);
+          urlCell.append(destination, hostText);
+          row.append(urlCell);
+
+          const statusCell = document.createElement('td');
+          const statusBadge = makeElement(
+            'span',
+            `badge ${Number(item.status) === 1 ? 'active' : 'disabled'}`,
+            Number(item.status) === 1 ? '已启用' : '已停用'
+          );
+          statusCell.append(statusBadge);
+          row.append(statusCell);
+
+          row.append(makeElement('td', 'number', Number(item.clicks || 0).toLocaleString('zh-CN')));
+          row.append(makeElement('td', 'created', item.create_time || '-'));
+
+          const actionsCell = document.createElement('td');
+          const actions = makeElement('div', 'row-actions');
+          const editButton = makeElement('button', 'text-button', '编辑');
+          editButton.type = 'button';
+          editButton.addEventListener('click', () => openModal(item));
+          const deleteButton = makeElement('button', 'text-button danger', '删除');
+          deleteButton.type = 'button';
+          deleteButton.addEventListener('click', () => removeLink(item));
+          actions.append(editButton, deleteButton);
+          actionsCell.append(actions);
+          row.append(actionsCell);
+
+          linksBody.append(row);
+        }
+      }
+
+      function renderPagination() {
+        const totalPages = Math.max(1, Math.ceil(state.total / state.pageSize));
+        if (state.page > totalPages) {
+          state.page = totalPages;
+          loadLinks();
+          return;
+        }
+
+        const start = state.total === 0 ? 0 : (state.page - 1) * state.pageSize + 1;
+        const end = Math.min(state.page * state.pageSize, state.total);
+        pageSummary.textContent = `第 ${start}-${end} 条，共 ${state.total} 条`;
+        pageNumber.textContent = `第 ${state.page} / ${totalPages} 页`;
+        prevPage.disabled = state.page <= 1;
+        nextPage.disabled = state.page >= totalPages;
+      }
+
+      async function copyShortLink(slug) {
+        const value = `${window.location.origin}/${encodeURIComponent(slug)}`;
+        try {
+          await navigator.clipboard.writeText(value);
+        } catch {
+          const helper = document.createElement('textarea');
+          helper.value = value;
+          helper.style.position = 'fixed';
+          helper.style.opacity = '0';
+          document.body.append(helper);
+          helper.select();
+          document.execCommand('copy');
+          helper.remove();
+        }
+        showToast('短链已复制。');
+      }
+
+      function openModal(item = null) {
+        state.editing = item;
+        modalTitle.textContent = item ? '编辑链接' : '新建链接';
+        modalSubmit.textContent = item ? '保存修改' : '创建链接';
+        modalError.hidden = true;
+        modalError.textContent = '';
+        linkForm.reset();
+        linkStatus.value = '1';
+        linkSlug.placeholder = '留空则自动生成';
+
+        if (item) {
+          linkUrl.value = item.url;
+          linkSlug.value = item.slug;
+          linkStatus.value = String(Number(item.status) === 1 ? 1 : 0);
+          linkSlug.placeholder = '请输入 slug';
+        }
+
+        modalBackdrop.hidden = false;
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => linkUrl.focus(), 0);
+      }
+
+      function closeModal() {
+        modalBackdrop.hidden = true;
+        document.body.style.overflow = '';
+        state.editing = null;
+      }
+
+      async function removeLink(item) {
+        const confirmed = window.confirm(`确定删除短链 /${item.slug} 吗？此操作不可撤销。`);
+        if (!confirmed) return;
+
+        try {
+          await api(`/admin/api/links/${item.id}`, { method: 'DELETE' });
+          showToast('链接已删除。');
+          await loadLinks();
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      }
+
+      loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        loginError.hidden = true;
+        loginButton.disabled = true;
+        loginButton.textContent = '正在验证...';
+
+        try {
+          await api('/admin/api/login', {
+            method: 'POST',
+            body: JSON.stringify({ password: passwordInput.value }),
+          });
+          passwordInput.value = '';
+          showView('dashboard');
+          state.page = 1;
+          await loadLinks();
+        } catch (error) {
+          loginError.textContent = error.message;
+          loginError.hidden = false;
+          passwordInput.focus();
+          passwordInput.select();
+        } finally {
+          loginButton.disabled = false;
+          loginButton.textContent = '进入后台';
+        }
+      });
+
+      passwordToggle.addEventListener('click', () => {
+        const show = passwordInput.type === 'password';
+        passwordInput.type = show ? 'text' : 'password';
+        passwordToggle.textContent = show ? '隐藏' : '显示';
+      });
+
+      document.getElementById('setup-refresh').addEventListener('click', checkSession);
+
+      document.getElementById('logout-button').addEventListener('click', async () => {
+        try { await api('/admin/api/logout', { method: 'POST' }); } catch { /* clear locally */ }
+        showLogin();
+        showToast('已退出登录。');
+      });
+
+      document.getElementById('create-button').addEventListener('click', () => openModal());
+      document.getElementById('refresh-button').addEventListener('click', loadLinks);
+      document.getElementById('modal-close').addEventListener('click', closeModal);
+      document.getElementById('modal-cancel').addEventListener('click', closeModal);
+
+      modalBackdrop.addEventListener('click', (event) => {
+        if (event.target === modalBackdrop) closeModal();
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !modalBackdrop.hidden) closeModal();
+      });
+
+      searchInput.addEventListener('input', () => {
+        clearTimeout(state.searchTimer);
+        state.searchTimer = setTimeout(() => {
+          state.query = searchInput.value.trim();
+          state.page = 1;
+          loadLinks();
+        }, 280);
+      });
+
+      statusFilter.addEventListener('change', () => {
+        state.status = statusFilter.value;
+        state.page = 1;
+        loadLinks();
+      });
+
+      prevPage.addEventListener('click', () => {
+        if (state.page <= 1) return;
+        state.page -= 1;
+        loadLinks();
+      });
+
+      nextPage.addEventListener('click', () => {
+        const totalPages = Math.max(1, Math.ceil(state.total / state.pageSize));
+        if (state.page >= totalPages) return;
+        state.page += 1;
+        loadLinks();
+      });
+
+      linkForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        modalError.hidden = true;
+        modalSubmit.disabled = true;
+
+        const payload = {
+          url: linkUrl.value.trim(),
+          status: Number(linkStatus.value),
+        };
+        const slug = linkSlug.value.trim();
+        if (slug) payload.slug = slug;
+
+        if (!payload.url) {
+          modalError.textContent = '请输入目标地址。';
+          modalError.hidden = false;
+          modalSubmit.disabled = false;
+          return;
+        }
+
+        try {
+          const path = state.editing
+            ? `/admin/api/links/${state.editing.id}`
+            : '/admin/api/links';
+          await api(path, {
+            method: state.editing ? 'PATCH' : 'POST',
+            body: JSON.stringify(payload),
+          });
+          const message = state.editing ? '链接已更新。' : '链接已创建。';
+          closeModal();
+          showToast(message);
+          await loadLinks();
+        } catch (error) {
+          modalError.textContent = error.message;
+          modalError.hidden = false;
+        } finally {
+          modalSubmit.disabled = false;
+        }
+      });
+
+      checkSession();
+    })();
+  </script>
+</body>
+</html>
