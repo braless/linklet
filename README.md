@@ -48,7 +48,7 @@
 wrangler pages secret put ADMIN_PASSWORD --project-name <你的 Pages 项目名>
 ```
 
-保存后重新部署项目，使 D1 绑定和密钥生效。
+设置或修改 ADMIN_PASSWORD 后必须重新部署项目，新的密钥才会生效。
 
 ### 4. 使用管理后台
 
